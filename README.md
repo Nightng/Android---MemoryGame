@@ -1,8 +1,14 @@
 #enhanced-memory-game-Nightng
 
-This is Wilson Ng's Pokemon theme Memory game for Homework3 on Android.
+This is Wilson Ng's Pokemon theme Memory game for Homework3 on Android with the following features:
+  Flip animations from AndroidViewAnimations and other animations from the default library.
+  Fragments for the rules of the game.
+  Butterknife for bindings and click handlers.
+  Menu option to Start Over.
+  Menu option to Shuffle cards
 
-1. Wilson Ng Tse
+
+1. Wilson Ng Tsew
 2. wilsonng1ve@gmail.com
 3. Individual project
 4. This project took 15 hours to complete
