@@ -88,7 +88,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="5. Hitting the back soft key while playing will take you back to the first screen. If you press Play again, it will prompt you to resume your previous game or play a new game."
-                android:id="@+id/textView6"
+                android:id="@+id/textView5"
                 android:textSize="20dp"
                 android:layout_below="@+id/textView4"
                 android:layout_alignParentStart="true"

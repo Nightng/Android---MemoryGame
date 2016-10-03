@@ -19,6 +19,8 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 
@@ -39,6 +41,7 @@ public class Game extends AppCompatActivity {
     private final int duration = 750;
     private final Handler handler = new Handler();
     private boolean allCardsVisible;
+    private boolean isRearranged;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +49,7 @@ public class Game extends AppCompatActivity {
         super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_game);
         Log.i("lifecycle", "onCreate called");
+        getSupportActionBar().setTitle("");
         if (savedInstanceState != null) {
             score = savedInstanceState.getInt(STATE_SCORE);
             if(score == 0) startNew();
@@ -94,6 +98,7 @@ public class Game extends AppCompatActivity {
         TextView v = (TextView) findViewById(R.id.tvScore);
         v.setText("0");
         didStart = false;
+        isRearranged = true;
     }
 
     public void askUser()
@@ -251,32 +256,33 @@ public class Game extends AppCompatActivity {
         Log.i("Called:", "show()");
         if(isBusy) return;
         ib1 = (ImageButton) findViewById(view.getId());
-            flipOutX(ib1, duration);
-            ib1.setImageResource((Integer) ib1.getTag());
-            flipInX(ib1, duration);
-            if (!flipOnce) {
-                flipOnce = true;
-                ibPrevious = (ImageButton) findViewById(view.getId());
-            } else {
-                if (ib1.getTag().equals(ibPrevious.getTag()) && ib1.getId() != ibPrevious.getId()) {
-                    isBusy = true;
+        flipOutX(ib1, duration);
+        ib1.setImageResource((Integer) ib1.getTag());
+        flipInX(ib1, duration);
+        if (!flipOnce) {
+            flipOnce = true;
+            ibPrevious = (ImageButton) findViewById(view.getId());
+        } else {
+            if (ib1.getTag().equals(ibPrevious.getTag()) && ib1.getId() != ibPrevious.getId()) {
+                isBusy = true;
+                handler.postDelayed( new Runnable(){@Override public void run() {
+                    fadeOutDown(ib1, duration);
+                    fadeOutDown(ibPrevious, duration);
+                    match = true;
+                    }},duration);
                     handler.postDelayed( new Runnable(){@Override public void run() {
-                        fadeOutDown(ib1, duration);
-                        fadeOutDown(ibPrevious, duration);
-                        match = true;
-                        }},duration);
-                        handler.postDelayed( new Runnable(){@Override public void run() {
-                            ib1.setVisibility(View.INVISIBLE);
-                            ibPrevious.setVisibility(View.INVISIBLE);
-                            isBusy = false;
-                        }},duration*2);
-                    allCardsVisible = false;
-                    incrementScore(view);
-                } else {
-                    ibCurrent = (ImageButton) findViewById(view.getId());
-                    match = false;
-                    isBusy = true;
-                }
+                        ib1.setVisibility(View.INVISIBLE);
+                        ibPrevious.setVisibility(View.INVISIBLE);
+                        isBusy = false;
+                    }},duration*2);
+                allCardsVisible = false;
+                incrementScore(view);
+                isRearranged = false;
+            } else {
+                ibCurrent = (ImageButton) findViewById(view.getId());
+                match = false;
+                isBusy = true;
+            }
                 flipOnce = false;
             }
         if (!match) {
@@ -334,43 +340,44 @@ public class Game extends AppCompatActivity {
     public void shuffleCards()
     {
         Log.i("Called:", "shuffleCards()");
-//        String s = Integer.toString(View.VISIBLE);
-//        Log.i("VISIBLE", s);
-//        s = Integer.toString(View.INVISIBLE);
-//        Log.i("INVISIBLE", s);
-//        Toast.makeText(this, Integer.toString(l.get(0).getVisibility()), Toast.LENGTH_LONG).show();
-//        int cardsAvailable = 0;
-//        for(int i = 0; i < l.size(); i++){
-//            ImageButton current = l.get(i);
-//            if(current.getVisibility() == View.VISIBLE) cardsAvailable++;
-//        }
-        for(int i = 0; i < l.size(); i++){
-//        for(int i = 0; i < cardsAvailable; i++){
-            ImageButton current = l.get(i);
-            if(current.getVisibility() == View.INVISIBLE)
-            {
-                int j = i + 1;
-                boolean found = false;
-                while(j < l.size() && !found){
-                    ImageButton next = l.get(j);
-                    if(next.getVisibility() == View.VISIBLE)
-                    {
-                        next.setVisibility(View.INVISIBLE);
-                        current.setTag(next.getTag());
-                        current.setImageResource(R.drawable.question);
-                        current.setVisibility(View.VISIBLE);
-                        flipInX(current, duration);
-                        found = true;
+        if(!isRearranged) {
+            for (int i = 0; i < l.size(); i++) {
+                ImageButton current = l.get(i);
+                if (current.getVisibility() == View.INVISIBLE) {
+                    int j = i + 1;
+                    boolean found = false;
+                    while (j < l.size() && !found) {
+                        ImageButton next = l.get(j);
+                        if (next.getVisibility() == View.VISIBLE) {
+                            next.setVisibility(View.INVISIBLE);
+                            current.setTag(next.getTag());
+                            current.setImageResource(R.drawable.question);
+                            current.setVisibility(View.VISIBLE);
+                            flipInX(current, duration);
+                            found = true;
+                        }
+                        j++;
                     }
-                    j++;
                 }
-//                Log.i(Integer.toString(i), Integer.toString(current.getVisibility()));
             }
-//            current.setVisibility(View.VISIBLE);
+            isRearranged = true;
         }
-//        for(int i = 0; i < l.size(); i++){
-//            ImageButton current = l.get(i);
-//            Log.i(Integer.toString(i), Integer.toString(current.getVisibility()));
-//        }
+        int numberOfCards = 20 - countMatchedCards();
+        List allImage = new ArrayList<>();
+        for(int i = 0; i < numberOfCards; i++)
+            allImage.add(l.get(i).getTag());
+        Collections.shuffle(allImage);
+        for(int i = 0; i < numberOfCards; i++)
+            l.get(i).setTag(allImage.get(i));
     }
+
+    private int countMatchedCards()
+    {
+        int matchedCards = 0;
+        for(int i = 0; i < l.size(); i++)
+            if(l.get(i).getVisibility() == View.INVISIBLE)
+                matchedCards++;
+        return matchedCards;
+    }
+
 }
